@@ -1,4 +1,4 @@
-import { wait } from './async'
+import { MaybePromise, wait } from './async'
 import { parseSimpleCssSelector } from './data'
 
 /**
@@ -12,7 +12,7 @@ import { parseSimpleCssSelector } from './data'
  * This function is out of Semantic Versioning, i.e. can change unexpectedly. Usage is at your own risk.
  */
 export async function withIframe<T>(
-  action: (iframe: HTMLIFrameElement, iWindow: Window) => Promise<T> | T,
+  action: (iframe: HTMLIFrameElement, iWindow: typeof window) => MaybePromise<T>,
   initialHtml?: string,
   domPollInterval = 50,
 ): Promise<T> {
@@ -26,7 +26,7 @@ export async function withIframe<T>(
   const iframe = d.createElement('iframe')
 
   try {
-    await new Promise((_resolve, _reject) => {
+    await new Promise<void>((_resolve, _reject) => {
       let isComplete = false
       const resolve = () => {
         isComplete = true
@@ -78,7 +78,7 @@ export async function withIframe<T>(
       await wait(domPollInterval)
     }
 
-    return await action(iframe, iframe.contentWindow)
+    return await action(iframe, iframe.contentWindow as typeof window)
   } finally {
     iframe.parentNode?.removeChild(iframe)
   }
@@ -116,5 +116,33 @@ export function addStyleString(style: CSSStyleDeclaration, source: string): void
       const [, name, value, , priority] = match
       style.setProperty(name, value, priority || '') // The last argument can't be undefined in IE11
     }
+  }
+}
+
+/**
+ * Returns true if the code runs in an iframe, and any parent page's origin doesn't match the current origin
+ */
+export function isAnyParentCrossOrigin(): boolean {
+  let currentWindow: Window = window
+
+  for (;;) {
+    const parentWindow = currentWindow.parent
+    if (!parentWindow || parentWindow === currentWindow) {
+      return false // The top page is reached
+    }
+
+    try {
+      if (parentWindow.location.origin !== currentWindow.location.origin) {
+        return true
+      }
+    } catch (error) {
+      // The error is thrown when `origin` is accessed on `parentWindow.location` when the parent is cross-origin
+      if (error instanceof Error && error.name === 'SecurityError') {
+        return true
+      }
+      throw error
+    }
+
+    currentWindow = parentWindow
   }
 }

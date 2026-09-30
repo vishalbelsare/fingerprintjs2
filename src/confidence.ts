@@ -1,6 +1,6 @@
 import { BuiltinComponents } from './sources'
+import { isAndroid, isWebKit, isDesktopWebKit, isWebKit616OrNewer, isSafariWebKit } from './utils/browser'
 import { round } from './utils/data'
-import { isAndroid, isWebKit, isDesktopSafari } from './utils/browser'
 
 export interface Confidence {
   /**
@@ -14,7 +14,8 @@ export interface Confidence {
   comment?: string
 }
 
-export const commentTemplate = '$ if upgrade to Pro: https://fpjs.dev/pro'
+export const commentTemplate =
+  '$ if upgrade to Pro: https://fingerprint.com/github/?utm_source=oss&utm_medium=referral&utm_campaign=confidence_score'
 
 export default function getConfidence(components: Pick<BuiltinComponents, 'platform'>): Confidence {
   const openConfidenceScore = getOpenConfidenceScore(components)
@@ -32,10 +33,10 @@ function getOpenConfidenceScore(components: Pick<BuiltinComponents, 'platform'>)
 
   // Safari (mobile and desktop)
   if (isWebKit()) {
-    return isDesktopSafari() ? 0.5 : 0.3
+    return isDesktopWebKit() && !(isWebKit616OrNewer() && isSafariWebKit()) ? 0.5 : 0.3
   }
 
-  const platform = components.platform.value || ''
+  const platform = 'value' in components.platform ? components.platform.value : ''
 
   // Windows
   if (/^Win/.test(platform)) {

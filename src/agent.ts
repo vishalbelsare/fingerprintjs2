@@ -1,10 +1,11 @@
 import { version } from '../package.json'
+
+import getConfidence, { Confidence } from './confidence'
+import loadBuiltinSources, { BuiltinComponents } from './sources'
 import { requestIdleCallbackIfAvailable } from './utils/async'
 import { UnknownComponents } from './utils/entropy_source'
 import { x64hash128 } from './utils/hashing'
 import { errorToObject } from './utils/misc'
-import loadBuiltinSources, { BuiltinComponents } from './sources'
-import getConfidence, { Confidence } from './confidence'
 
 /**
  * Options for Fingerprint class loading
@@ -82,7 +83,7 @@ function componentsToCanonicalString(components: UnknownComponents) {
   let result = ''
   for (const componentKey of Object.keys(components).sort()) {
     const component = components[componentKey]
-    const value = component.error ? 'error' : JSON.stringify(component.value)
+    const value = 'error' in component ? 'error' : JSON.stringify(component.value)
     result += `${result ? '|' : ''}${componentKey.replace(/([:|\\])/g, '\\$1')}:${value}`
   }
   return result
@@ -200,11 +201,12 @@ function monitor() {
 /**
  * Builds an instance of Agent and waits a delay required for a proper operation.
  */
-export async function load({ delayFallback, debug, monitoring = true }: Readonly<LoadOptions> = {}): Promise<Agent> {
+export async function load(options: Readonly<LoadOptions> = {}): Promise<Agent> {
+  const { delayFallback, debug, monitoring = true } = options
   if (monitoring) {
     monitor()
   }
   await prepareForSources(delayFallback)
-  const getComponents = loadBuiltinSources({ debug })
+  const getComponents = loadBuiltinSources({ cache: {}, debug })
   return makeAgent(getComponents, debug)
 }

@@ -7,7 +7,7 @@ Use undocumented features at your own risk.
 
 The library tries to keep visitor identifiers the same within a minor version (i.e. when the first 2 numbers of the version don't change).
 Some visitor identifiers may change within a minor version due to stability fixes.
-To get identifiers that remain stable up to 1 year, please consider [upgrading to pro](https://dashboard.fingerprintjs.com).
+To get identifiers that remain stable up to 1 year, please consider [upgrading to pro](https://dashboard.fingerprint.com).
 
 Agent `get()` function returns the version together with the visitor identifier.
 You can use it to decide whether a couple of identifiers can be matched together.
@@ -33,10 +33,10 @@ If this is an issue for you, you can implement the following strategy.
 When a new minor or major version is released, install it together with the current version:
 
 ```ts
-const oldFpPromise = import('https://openfpcdn.io/fingerprintjs/v3.2')
+const oldFpPromise = import('https://openfpcdn.io/fingerprintjs/v5.1')
   .then(FingerprintJS => FingerprintJS.load())
 
-const newFpPromise = import('https://openfpcdn.io/fingerprintjs/v3.3')
+const newFpPromise = import('https://openfpcdn.io/fingerprintjs/v6.0')
   .then(FingerprintJS => FingerprintJS.load())
 ```
 
@@ -52,8 +52,8 @@ Promise.all([
   // Handle both the results. For example, send to your server.
   return fetch(
     '/visitor'
-      + `?fingerprintV3_2=${encodeURIComponent(oldResult.visitorId)}`
-      + `&fingerprintV3_3=${encodeURIComponent(newResult.visitorId)}`
+      + `?fingerprintV4_1=${encodeURIComponent(oldResult.visitorId)}`
+      + `&fingerprintV5_0=${encodeURIComponent(newResult.visitorId)}`
   )
 })
 ```
@@ -65,18 +65,18 @@ Save the new identifier, there is no need to save the old identifier for new vis
 -- Getting the visitor
 SELECT * FROM visitors
 WHERE
-  fingerprintV3_2 = :fingerprintV3_2 OR
-  fingerprintV3_3 = :fingerprintV3_3;
+  fingerprintV4_1 = :fingerprintV4_1 OR
+  fingerprintV5_0 = :fingerprintV5_0;
 
 -- Update the visitor identifier
 -- to switch to the new fingerprint version
 UPDATE visitors
-SET fingerprintV3_3 = :fingerprintV3_3
-WHERE fingerprintV3_2 = :fingerprintV3_2;
+SET fingerprintV5_0 = :fingerprintV5_0
+WHERE fingerprintV4_1 = :fingerprintV4_1;
 
 -- Saving a new visitor
-INSERT INTO visitors (..., fingerprintV3_3)
-VALUES (..., :fingerprintV3_3);
+INSERT INTO visitors (..., fingerprintV5_0)
+VALUES (..., :fingerprintV5_0);
 ```
 
 Later, when you get many enough identifiers of the new version, remove the old library and the old identifiers.

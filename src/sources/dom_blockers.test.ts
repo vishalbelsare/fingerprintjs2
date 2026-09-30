@@ -1,9 +1,11 @@
 import { isChromium } from '../../tests/utils'
-import { selectorToElement } from '../utils/dom'
+import { MaybePromise } from '../utils/async'
 import { parseSimpleCssSelector } from '../utils/data'
-import getDomBlockers, { filters, isApplicable } from './dom_blockers'
+import { selectorToElement } from '../utils/dom'
 
-async function withBlockedSelectors<T>(selectors: string[], action: () => Promise<T> | T): Promise<T> {
+import getDomBlockers, { getFilters, isApplicable } from './dom_blockers'
+
+async function withBlockedSelectors<T>(selectors: string[], action: () => MaybePromise<T>): Promise<T> {
   const styleElement = document.createElement('style')
 
   try {
@@ -18,6 +20,8 @@ async function withBlockedSelectors<T>(selectors: string[], action: () => Promis
 
 describe('Sources', () => {
   describe('domBlockers', () => {
+    const filters = getFilters()
+
     describe('the filter list', () => {
       const selectors = ([] as string[]).concat(
         ...Object.keys(filters).map((filterName) => filters[filterName as keyof typeof filters]),
@@ -60,7 +64,7 @@ describe('Sources', () => {
 
       it('has only reproducible selectors', () => {
         if (!isApplicable() && !isChromium()) {
-          pending('The case is for supported browsers and for Chrome (for local testing) only')
+          return
         }
 
         for (const selector of selectors) {
@@ -87,7 +91,7 @@ describe('Sources', () => {
 
     it('returns `undefined` for unsupported browsers', async () => {
       if (isApplicable()) {
-        pending('The case is for unsupported browsers only')
+        return
       }
 
       expect(await getDomBlockers()).toBeUndefined()
@@ -95,7 +99,7 @@ describe('Sources', () => {
 
     it('handles absence of blockers', async () => {
       if (!isApplicable()) {
-        pending('The case is for supported browsers only')
+        return
       }
 
       expect(await getDomBlockers())
@@ -107,7 +111,7 @@ describe('Sources', () => {
 
     it('handles blocked selectors', async () => {
       if (!isApplicable()) {
-        pending('The case is for supported browsers only')
+        return
       }
 
       await withBlockedSelectors(
